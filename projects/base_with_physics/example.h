@@ -1,8 +1,12 @@
 #pragma once
 
 #include "app.h"
-#include "kage2dutil/physics.h"
-#include "rabbit.h"
+#include "scenemanager.h"
+#include "scene.h"
+#include "mainmenu.h"
+
+//#include "kage2dutil/physics.h"
+//#include "rabbit.h"
 
 class Example : public App
 {
@@ -14,6 +18,8 @@ public:
 	virtual void render();
 	virtual void cleanup();
 	static Example &inst();
+
+	SceneManager sManager;
 
 	sf::Sprite *m_backgroundSprite;
 };

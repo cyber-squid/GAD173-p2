@@ -1,8 +1,9 @@
-#include "Rabbit.h"
+/*#include "Rabbit.h"
 #include "example.h"
 
 Rabbit::Rabbit()
 {
+	
 	m_sprite = kage::TextureManager::getSprite("data/zazaka.png");
 	kage::centreOrigin(m_sprite);
 	m_tags.add("Rabbit");
@@ -20,6 +21,7 @@ Rabbit::Rabbit()
 		.radius(0.4)
 		.mass(1)
 		.build(m_body); // We need to tell the builder which body to attach to
+	
 }
 
 Rabbit::~Rabbit()
@@ -50,3 +52,4 @@ void Rabbit::onCollision(b2Fixture *fix)
 	//}
 }
 
+*/

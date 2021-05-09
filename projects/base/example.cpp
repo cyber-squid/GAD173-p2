@@ -1,6 +1,7 @@
 #include "example.h"
 #include "grid.h"
-#include "tiles.h"
+#include "map.h"
+#include "saveandload.h"
 
 Example::Example(): App()
 {
@@ -17,54 +18,30 @@ Example &Example::inst()
 	return s_instance;
 }
 
+void Example::setBackground(std::string textureFilename)
+{
+	m_backgroundSprite = kage::TextureManager::getSprite(textureFilename);
+	sf::Vector2u resolution = m_backgroundSprite->getTexture()->getSize();
+	m_backgroundSprite->setScale(float(m_window.getSize().x) / resolution.x, float(m_window.getSize().y) / resolution.y);
+}
+
 bool Example::start()
 {
 	//Tiles MapTiles;
-	m_backgroundSprite = kage::TextureManager::getSprite("data/sky.jpg");
-	sf::Vector2u resolution = m_backgroundSprite->getTexture()->getSize();
-	m_backgroundSprite->setScale(float(m_window.getSize().x) / resolution.x, float(m_window.getSize().y) / resolution.y);
+	//testTexture = kage::TextureManager::getTexture("data/breakout/farhantilesheet.png");
+	setBackground("data/breakout/newpixelkoipond.jpg");
 
-	// two loops that print all saved tiles on the x and x axes
+	MapTiles.PrintCurrentSave();
 	
-	for (size_t y = 0; y < Y_LINES_AMNT - 1; y++)
+	//exampleTileAnim.Load(testTexture, 60, 40);
+	//exampleTileAnim.SetSpriteCycle(sf::Vector2i(0, 2), sf::Vector2i(6, 2), 70);
+	//exampleTileAnim.spritesheet.setPosition(sf::Vector2f(GRID_OFFSET_X, GRID_OFFSET_Y));
+
+	for (size_t i = 0; i < TILE_ARRAY_SIZE; i++)
 	{
-		for (size_t x = 0; x < X_LINES_AMNT - 1; x++) 
-		{
-			int i = x + y * (X_LINES_AMNT - 1); // formula for finding the position of the tile
-			
-			// assigns a sprite to the tile based on the value saved to the associated grid space
-			if (MapTiles.saveMap[i] == 1)
-			{
-				MapTiles.tileset[i].setTexture(*MapTiles.redBlockTexture);
-				MapTiles.saveMap[i] = 1;
-			}
-
-			if (MapTiles.saveMap[i] == 2)
-			{
-				MapTiles.tileset[i].setTexture(*MapTiles.blueBlockTexture);
-				MapTiles.saveMap[i] = 2;
-			}
-
-			if (MapTiles.saveMap[i] == 3)
-			{
-				MapTiles.tileset[i].setTexture(*MapTiles.greenBlockTexture);
-				MapTiles.saveMap[i] = 3;
-			}
-			else
-			{
-				// failsafe in case the value saved isn't in the above registry for whatever reason
-			}
-			
-			MapTiles.tileset[i].setScale(1.9, 1.9999);
-			MapTiles.tileset[i].setPosition(
-				sf::Vector2f(x * CELL_WIDTH + GRID_OFFSET_X,
-					y * CELL_HEIGHT + GRID_OFFSET_Y));
-			// each time this loop completes it incerements the main loop,
-			// and the position and instance of tile depend on how far into
-			// the loop the processor is, so the tiles are printed row by row.
-		}
+		MapTiles.tiles[i].SetSpriteCycle(sf::Vector2i(0, 1), sf::Vector2i(6, 1), 200);
 	}
-	
+
 	return true;
 }
 
@@ -79,6 +56,26 @@ void Example::update(float deltaT)
 	
 	
 	ImGui::Begin("Options"); 
+	if (ImGui::Button("SAVE Slot 1"))
+	{
+		setBackground("data/breakout/newpixelkoipond.jpg");
+		SaveAndLoad::SaveMap(mapOneSavefileName, MapTiles.saveMap);
+	}
+	if (ImGui::Button("LOAD Slot 1"))
+	{
+		setBackground("data/breakout/newpixelkoipond.jpg");
+		SaveAndLoad::LoadMap(mapOneSavefileName, MapTiles.saveMap, MapTiles);
+	}
+	if (ImGui::Button("SAVE Slot 2"))
+	{
+		setBackground("data/breakout/newpixelmountainvillage.jpg");
+		SaveAndLoad::SaveMap(mapTwoSavefileName, MapTiles.saveMap);
+	}
+	if (ImGui::Button("LOAD Slot 2"))
+	{
+		setBackground("data/breakout/newpixelmountainvillage.jpg");
+		SaveAndLoad::LoadMap(mapTwoSavefileName, MapTiles.saveMap, MapTiles);
+	}
 	if (ImGui::Button("Eraser"))
 	{
 		tileIDSelected = 0;
@@ -95,16 +92,17 @@ void Example::update(float deltaT)
 	{
 		tileIDSelected = 3;
 	}
+	if (ImGui::ImageButton(*MapTiles.yellowBlockTexture, sf::Vector2f(53, 25)))
+	{
+		tileIDSelected = 4;
+	}
 	if(ImGui::Button("Exit"))
 	{ 
 		m_running = false;
 	}
 	ImGui::End();
 
-	//fdjfjsnkfj
-	// some more changes
-	// 	   fkgslgk
-	// 
+
 	//how it should work:
 	//-if mouse clicked, get x and y
 	//-divide x and y by width and height
@@ -112,11 +110,14 @@ void Example::update(float deltaT)
 	//-use this to determine index number for the grid tile and load the selected sprite
 	//to the corresponding index no.  depending on which tile type the player selected
 	
+
+	//MapTiles.GetMousePosOnGrid(m_window);
+	
 	sf::Vector2i mousePos = sf::Mouse::getPosition(m_window); 
 	
 	if (
-		mousePos.x >= GRID_OFFSET_X && mousePos.x <= Y_LINES_AMNT *  CELL_WIDTH 
-			&& mousePos.y >= GRID_OFFSET_Y && mousePos.y <= X_LINES_AMNT * CELL_HEIGHT 
+		mousePos.x >= GRID_OFFSET_X && mousePos.x <= X_LINE_LENGTH 
+			&& mousePos.y >= GRID_OFFSET_Y && mousePos.y <= (Y_LINE_LENGTH+ (CELL_HEIGHT / 2))
 				&& sf::Mouse::isButtonPressed(sf::Mouse::Left) )
 	{
 	
@@ -124,48 +125,77 @@ void Example::update(float deltaT)
 		int mouseCellY = ((mousePos.y - GRID_OFFSET_Y) / CELL_HEIGHT);
 
 		int selectedSquare = mouseCellX + mouseCellY  * (X_LINES_AMNT - 1);
-		//std::cout << selectedSquare << std::endl;
+		std::cout << selectedSquare << std::endl;
 		
 		if (tileIDSelected == 0)
 		{
-			MapTiles.tileset[selectedSquare].setTexture(*MapTiles.errorBlockTexture);
-			MapTiles.tileset[selectedSquare].setColor(sf::Color(255, 255, 255, 0));
+			MapTiles.tiles[selectedSquare].Load(MapTiles.blueBlockTilesheet, TILE_WIDTH, TILE_HEIGHT);
+			MapTiles.tiles[selectedSquare].spritesheet.setColor(sf::Color(255, 255, 255, 0));
+			//MapTiles.tileset[selectedSquare].setTexture(*MapTiles.errorBlockTexture);
+			//MapTiles.tileset[selectedSquare].setColor(sf::Color(255, 255, 255, 0));
+			MapTiles.tiles[selectedSquare].tileID = 0;
 			MapTiles.saveMap[selectedSquare] = 0;
 		}
 		if (tileIDSelected == 1)
 		{
-			MapTiles.tileset[selectedSquare].setTexture(*MapTiles.redBlockTexture);
-			MapTiles.tileset[selectedSquare].setColor(sf::Color(255, 255, 255, 255));
+			MapTiles.tiles[selectedSquare].Load(MapTiles.redBlockTilesheet, TILE_WIDTH, TILE_HEIGHT);
+			MapTiles.tiles[selectedSquare].spritesheet.setColor(sf::Color(255, 255, 255, 255));
+			//MapTiles.tileset[selectedSquare].setTexture(*MapTiles.redBlockTexture);
+			//MapTiles.tileset[selectedSquare].setColor(sf::Color(255, 255, 255, 255));
+			MapTiles.tiles[selectedSquare].tileID = 1;
 			MapTiles.saveMap[selectedSquare] = 1;
 		}
 		if (tileIDSelected == 2)
 		{
-			MapTiles.tileset[selectedSquare].setTexture(*MapTiles.blueBlockTexture);
-			MapTiles.tileset[selectedSquare].setColor(sf::Color(255, 255, 255, 255));
+			MapTiles.tiles[selectedSquare].Load(MapTiles.blueBlockTilesheet, TILE_WIDTH, TILE_HEIGHT);
+			MapTiles.tiles[selectedSquare].spritesheet.setColor(sf::Color(255, 255, 255, 255));
+			//MapTiles.tileset[selectedSquare].setTexture(*MapTiles.blueBlockTexture);
+			//MapTiles.tileset[selectedSquare].setColor(sf::Color(255, 255, 255, 255));
+			MapTiles.tiles[selectedSquare].tileID = 2;
 			MapTiles.saveMap[selectedSquare] = 2;
 		}
 		if (tileIDSelected == 3)
 		{
-			MapTiles.tileset[selectedSquare].setTexture(*MapTiles.greenBlockTexture);
-			MapTiles.tileset[selectedSquare].setColor(sf::Color(255, 255, 255, 255));
+			MapTiles.tiles[selectedSquare].Load(MapTiles.greenBlockTilesheet, TILE_WIDTH, TILE_HEIGHT);
+			MapTiles.tiles[selectedSquare].spritesheet.setColor(sf::Color(255, 255, 255, 255));
+			//MapTiles.tileset[selectedSquare].setTexture(*MapTiles.greenBlockTexture);
+			//MapTiles.tileset[selectedSquare].setColor(sf::Color(255, 255, 255, 255));
+			MapTiles.tiles[selectedSquare].tileID = 3;
 			MapTiles.saveMap[selectedSquare] = 3;
 		}
+		if (tileIDSelected == 4)
+		{
+			MapTiles.tiles[selectedSquare].Load(MapTiles.yellowBlockTilesheet, TILE_WIDTH, TILE_HEIGHT);
+			MapTiles.tiles[selectedSquare].spritesheet.setColor(sf::Color(255, 255, 255, 255));
+			//MapTiles.tileset[selectedSquare].setTexture(*MapTiles.yellowBlockTexture);
+			//MapTiles.tileset[selectedSquare].setColor(sf::Color(255, 255, 255, 255));
+			MapTiles.tiles[selectedSquare].tileID = 4;
+			MapTiles.saveMap[selectedSquare] = 4;
+		}
 	}
-
 	
+	//exampleTileAnim.Update();
+
+	for (size_t i = 0; i < TILE_ARRAY_SIZE; i++)
+	{
+		MapTiles.tiles[i].Update();
+	}
 }
 
 void Example::render()
 {
-	Grid LineGrid;
 	m_window.draw(*m_backgroundSprite);
+	m_window.draw(LineGrid.GridBackground);
 	
 	for (size_t i = 0; i < TILE_ARRAY_SIZE; i++)
 	{
 		m_window.draw(MapTiles.tileset[i]);
+		MapTiles.tiles[i].Render(m_window);
 	}
 
 	LineGrid.Draw(m_window);
+
+	//exampleTileAnim.Render(m_window);
 }
 
 void Example::cleanup()

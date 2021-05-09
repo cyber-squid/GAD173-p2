@@ -1,7 +1,7 @@
 #pragma once
-#include "kage2dutil/gameobject.h"
+//#include "kage2dutil/gameobject.h"
 
-class Rabbit : public kage::GameObject
+/*class Rabbit : public kage::GameObject
 {
 public:
 	Rabbit();
@@ -11,4 +11,4 @@ public:
 	void update(float deltaT);
 	void onCollision(GameObject *obj);
 	void onCollision(b2Fixture *fix);
-};
+};*/

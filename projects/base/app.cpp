@@ -23,7 +23,7 @@ bool App::init()
 	kf::LogSystem::getDefault().addFile("base.log");
 	kf_log("Started");
 
-	m_window.create(sf::VideoMode(1440, 810, 32), "GAD173 - Shamma's Tile Editor");
+	m_window.create(sf::VideoMode(1440, 810, 32), "GAD173 - Shamma's Unfinished Breakout Clone");
 	m_window.setFramerateLimit(60);
 	
 	if (!m_font.loadFromFile("data/bluehigh.ttf"))
